@@ -32,16 +32,21 @@ def adjMatFromFile(filename):
 
 def TSPwGenAlgo(
         g,
-        max_num_generations=5,
-        population_size=10,
+        max_num_generations=100,
+        population_size=200,
         mutation_rate=0.01,
         explore_rate=0.5
     ):
     """ A genetic algorithm to attempt to find an optimal solution to TSP  """
-    solution_distance = None        # final solution distance
-    solution = []                   # final path sequence of vertices found
-    current_shortest_path = []      # A list to keep track of shortest path found in each generation
+    # NOTE: YOU SHOULD CHANGE THE DEFAULT PARAMETER VALUES ABOVE TO VALUES YOU
+    # THINK WILL YIELD THE BEST SOLUTION FOR A GRAPH OF ~100 VERTS AND THAT CAN
+    # RUN IN 5 MINUTES OR LESS (ON AN AVERAGE LAPTOP COMPUTER)
+
+    solution_path = [] # list of n+1 verts representing sequence of vertices with lowest total distance found
+    solution_distance = INF # distance of final solution path, note this should include edge back to starting vert
+    avg_path_each_generation = [] # store average path length path across individuals in each generation
     number_of_cities = len(g)  
+
     discover_size = math.ceil(explore_rate * population_size)
     mate = int(population_size)
     population = generate_initial_population(population_size, number_of_cities) # create individual members of the population  
@@ -50,7 +55,7 @@ def TSPwGenAlgo(
             pop_result = (calc_distance_for_given_path(population[i][1], g), population[i][1])
             population[i] = pop_result
         population.sort(key=lambda city: city[0])
-        current_shortest_path.append(population[0][0])
+        avg_path_each_generation.append(population[0][0])
         children = []
         for i in range(population_size):
             parent_1 = mating(population[:discover_size], mate)
@@ -66,13 +71,13 @@ def TSPwGenAlgo(
         population = children
   
     population.sort(key=lambda city: city[0])
-    solution = population[0][1]
+    solution_path = population[0][1]
     solution_distance = calc_distance_for_given_path(population[0][1], g)
-    solution = [population[0][1], solution[0]]
+    solution_path = [population[0][1], solution_path[0]]
     return {
-            'solution': solution,
+            'solution_path': solution_path,
             'solution_distance': solution_distance,
-            'evolution': current_shortest_path
+            'evolution': avg_path_each_generation
            }
 
 
@@ -85,9 +90,7 @@ def generate_initial_population(size, number_of_cities):
 
 
 def calc_distance_for_given_path(path, graph):
-    """
-    Method to get distance within a path
-    """
+    """ Method to get distance within a path """
     distance = 0
     for i in range(-1,(len(path) - 1), 1):
         distance += graph[path[i]][path[i + 1]]
@@ -159,7 +162,7 @@ def TSPwBandB(g):
 
 def assign05_main():
     """ Load the graph (change the filename when you're ready to test larger ones) """
-    g = adjMatFromFile("complete_graph_n08.txt")
+    g = adjMatFromFile("complete_graph_n100.txt")
 
     # Run genetic algorithm to find best solution possible
     start_time = time.time()
@@ -167,7 +170,7 @@ def assign05_main():
     elapsed_time_ga = time.time() - start_time
     print(f"GenAlgo runtime: {elapsed_time_ga:.2f}")
     print(f"  sol dist: {res_ga['solution_distance']}")
-    print(f"  sol path: {res_ga['solution']}")
+    print(f"  sol path: {res_ga['solution_path']}")
 
     # (Try to) run Dynamic Programming algorithm only when n_verts <= 10
     if len(g) <= 10:
@@ -177,7 +180,7 @@ def assign05_main():
         if len(res_dyn_prog['solution_path']) == len(g) + 1:
             print(f"Dyn Prog runtime: {elapsed_time:.2f}")
             print(f"  sol dist: {res_dyn_prog['solution_distance']}")
-            print(f"  sol path: {res_dyn_prog['solution']}")
+            print(f"  sol path: {res_dyn_prog['solution_path']}")
 
     # (Try to) run Branch and Bound only when n_verts <= 10
     if len(g) <= 10:
@@ -187,7 +190,7 @@ def assign05_main():
         if len(res_bnb['solution_path']) == len(g) + 1:
             print(f"Branch & Bound runtime: {elapsed_time:.2f}")
             print(f"  sol dist: {res_bnb['solution_distance']}")
-            print(f"  sol path: {res_bnb['solution']}")
+            print(f"  sol path: {res_bnb['solution_path']}")
 
 
 # Check if the program is being run directly (i.e. not being imported)
